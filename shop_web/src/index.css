@@ -64,3 +64,15 @@ body {
   cursor: not-allowed;
   opacity: 0.55;
 }
+
+.alert-warning {
+  font-weight: bold;
+  border-width: medium;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+.alert-danger {
+  font-weight: bold;
+  border-width: medium;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
+}

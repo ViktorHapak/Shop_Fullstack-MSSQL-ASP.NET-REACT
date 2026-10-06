@@ -26,7 +26,7 @@ function Login() {
 
     const {error, errorMessage, errorState, notification, loading,
         token, user, role,
-        setError, setErrorMessage, setNotification, setLoading,
+        setError, setErrorMessage, setErrorState, setNotification, setLoading,
         setToken, setUser, setRole, setAuthorities} = useStateContext();
 
     const navigate = useNavigate();
@@ -91,7 +91,7 @@ function Login() {
         required: 'Kötelező mező!',
         minLength: { value: 6, message: 'Min. 6 karakter' },
         pattern: {
-            value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{6,}$/,
+            value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/,
             message:
                 'Legalább 1 kis- és nagybetű, 1 szám megadása kötelező!',
         },
@@ -156,13 +156,41 @@ function Login() {
     const {sendRequest: getUserRequest} = useHttp(`auth`, null, "GET", null, fetchUser);
     const {sendRequest: getAuthoritiesRequest} = useHttp("auth/authorities", null, 'GET', null, getAuthorities);
 
+    const login = () => {
+        const username = payload().username;
+        const password = payload().password;
+
+        if (username === "anonymus") {
+
+            if (password !== "Anonim123...") {
+                setError({message: "Authentication error"});
+                setErrorMessage("Hibás jelszó!");
+                setErrorState();
+                return;
+            }
+
+            setToken("demo_token");
+            setRole("anonymous");
+            setNotification(`Bejelentkezve demo módban!`);
+
+            setError(null);
+            setErrorMessage("");
+            setErrorState(null);
+
+            navigate('/');
+
+        } else
+            loginRequest()
+    }
+
     useEffect(() => {
         return () => {
             setError(null);
             setLoading(false);
             setErrorMessage('');
+            setErrorState(null);
         };
-    }, []);
+    }, [setError, setLoading, setErrorMessage, setErrorState]);
 
     return (
          <div className="login-container">
@@ -173,7 +201,7 @@ function Login() {
                  <img className={styles["empty-img"]} src={emptyImageUrl}></img>
              </div>
              <hr/>
-             <form onSubmit={handleSubmit(loginRequest)}>
+             <form onSubmit={handleSubmit(login)}>
                  <div className={styles["controllers-div"]}>
                      <div className={styles["name-container"]}>
                          <label htmlFor="username-control">Felhasználónév:</label>

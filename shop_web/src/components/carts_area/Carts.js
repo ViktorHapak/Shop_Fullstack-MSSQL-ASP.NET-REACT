@@ -103,6 +103,15 @@ function Carts(){
             (role === "Moderator" && authorities?.cleanExpired === true)
         );
     };
+
+    useEffect(() => {
+        return () => {
+            setError(null);
+            setLoading(false);
+            setErrorMessage('');
+            setErrorState(null);
+        };
+    }, [setError, setLoading, setErrorMessage, setErrorState]);
     
 
     return (

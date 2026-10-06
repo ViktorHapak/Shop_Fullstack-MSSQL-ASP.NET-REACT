@@ -128,8 +128,9 @@ function Orders(){
             setError(null);
             setLoading(false);
             setErrorMessage('');
+            setErrorState(null);
         };
-    }, [setError, setLoading, setErrorMessage]);
+    }, [setError, setLoading, setErrorMessage, setErrorState]);
 
     const convertTimeRangName = (timerange) => {
         switch (timerange) {

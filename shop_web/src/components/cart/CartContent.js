@@ -10,8 +10,8 @@ import {useStateContext} from "../../_context/context_provider";
 
 function CartContent() {
 
-    const {token, loading, error, errorMessage, errorState,
-            setLoading, setError, setErrorMessage, setErrorState, setNotification} = useStateContext();
+    const {token, loading, error, errorMessage, errorState, demoMode, demoCart,
+            products, setLoading, setError, setErrorMessage, setErrorState, setNotification, setDemoCart} = useStateContext();
     const [cart, setCart] = useState(null);
     const [items, setItems] = useState([]);
     const [focusIndex, setFocusIndex] = useState(null);
@@ -75,7 +75,12 @@ function CartContent() {
     const {sendRequest: makeOrderRequest} = useHttp("orders/order", null, 'POST', null, makeOrder, true);
 
     useEffect(() => {
-        getCartRequest();
+        if (demoMode){
+            setCart(structuredClone(demoCart));
+            setItems(structuredClone(demoCart?.items));
+        } else {
+            getCartRequest();
+        }
     }, [getCartRequest]);
 
     useEffect(() => {
@@ -139,8 +144,60 @@ function CartContent() {
             setError(null);
             setLoading(false);
             setErrorMessage('');
+            setErrorState(null);
         };
-    }, [setError, setLoading, setErrorMessage]);
+    }, [setError, setLoading, setErrorMessage, setErrorState]);
+
+    const makeDemoRequest = () => {
+        const emptyCart = {
+            items: [],
+            totalPrice: 0
+        };
+
+        setItems([]);
+        setDemoCart(emptyCart);
+        setCart(emptyCart);
+
+        setNotification("A rendelés nem került rögzítésre demo módban!");
+    };
+
+    const removeDemoProduct =  (productId, productName) => {
+
+        let updatedItems;
+        const item = demoCart.items.find(item => item.id === productId);
+
+        if (!item) {
+            return;
+        }
+
+        if (item.quantity > 1) {
+            updatedItems = demoCart.items.map(item =>
+                item.id === productId ? {
+                        ...item,
+                        quantity: item.quantity - 1,
+                        totalPrice: (item.quantity - 1) * (item.totalPrice / item.quantity)
+                    } : item
+            );
+        } else {
+            updatedItems = demoCart.items.filter(item => item.id !== productId);
+        }
+
+        const totalPrice = updatedItems.reduce((sum, item) => sum + item.totalPrice, 0);
+
+        setDemoCart({
+            items: updatedItems,
+            totalPrice: totalPrice
+        });
+
+        setCart({
+            items: updatedItems,
+            totalPrice: totalPrice
+        });
+
+        setItems(updatedItems);
+
+        setNotification(`Termék törölve a listából: \n${productName}`);
+    }
 
     return (
         <div className={styles["cart-container"]}>
@@ -169,8 +226,7 @@ function CartContent() {
                                 <button
                                     type="button"
                                     className={`btn btn-danger ${styles["close-btn"]}`}
-
-                                    onClick={() => removeProduct(item.productId, item.product)}
+                                    onClick={() => demoMode ? removeDemoProduct(item.id, item.product) : removeProduct(item.productId, item.product)}
                                 >
                                     X
                                 </button>
@@ -209,22 +265,23 @@ function CartContent() {
                             Üres bevásárlólista!
                         </div>
                     )}
-
-                    <div className="card mt-3">
-                        <div className="card-body bg-light py-2 text-end fw-bold">
-                            Összesen: {cart.totalPrice ?? 0} Ft
-                        </div>
-                    </div>
-                    <div className="d-flex m-4 g-1 justify-content-center">
-                        <button className="btn btn-success w-75 py-2 fw-bold"
-                                disabled={loading || error || items.length<1}
-                                onClick={() => makeOrderRequest()}
-                        >
-                            Rendelés leadása
-                        </button>
-                    </div>
                 </div>
             )}
+            <div className="card mt-2" style={{ width: '90%', margin: '0 auto' }}>
+                <div className="card-body bg-light py-2 text-end fw-bold">
+                    Összesen: {cart?.totalPrice ?? 0} Ft
+                </div>
+            </div>
+            <div className="d-flex m-4 mb-3 g-1 justify-content-center">
+                <button className="btn btn-success w-75 py-2 fw-bold"
+                        disabled={loading || error || items.length<1}
+                        onClick={() => demoMode ? makeDemoRequest() :
+                            makeOrderRequest()
+                        }
+                >
+                    Rendelés leadása
+                </button>
+            </div>
             {!loading && error && (errorState !== 500) &&
                 (
                     (errorMessage.length < 2)  ?

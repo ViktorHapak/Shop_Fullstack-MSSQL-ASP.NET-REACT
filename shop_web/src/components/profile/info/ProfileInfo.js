@@ -12,8 +12,8 @@ import {useNavigate} from "react-router";
 
 function ProfileInfo() {
 
-    const {token, role, error, errorState, loading,
-            setError, setLoading, setErrorMessage} = useStateContext();
+    const {token, role, error, errorState, loading, demoMode,
+            setError, setLoading, setErrorMessage, setErrorState} = useStateContext();
     const [user, setUser] = useState({});
 
     const navigate = useNavigate();
@@ -25,7 +25,20 @@ function ProfileInfo() {
     const {sendRequest} = useHttp(`auth`, null, "GET", null, fetchUser);
 
     useEffect(() => {
-        sendRequest()
+        if (demoMode){
+            loadingInDemoMode();
+            setUser({
+                Username: "anonymus",
+                Email: "anonymous@mail.com",
+                Birth: new Date(),
+                Role: "anonymous",
+                Authentication: "username",
+                Password: encodeDemoPassword("Anonim123..."),
+                Token: token,
+            })
+        } else {
+            sendRequest()
+        }
     }, []);
 
     useEffect(() => {
@@ -33,8 +46,9 @@ function ProfileInfo() {
             setError(null);
             setLoading(false);
             setErrorMessage('');
+            setErrorState(null);
         };
-    }, []);
+    }, [setError, setLoading, setErrorMessage, setErrorState]);
 
     useEffect(() => {
         if (errorState === 401 && error) {
@@ -46,6 +60,31 @@ function ProfileInfo() {
         if (!date) return "";
         return new Date(date).toISOString().split("T")[0];
     };
+
+    //Just for anonymous mode - normally, we gets encoded password from the server
+    const encodeDemoPassword = async (password) => {
+        const data = new TextEncoder().encode(password);
+
+        const hashBuffer = await crypto.subtle.digest(
+            'SHA-256',
+            data
+        );
+
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+
+        return hashArray
+            .map(byte => byte.toString(16).padStart(2, '0'))
+            .join('');
+    };
+
+    const  loadingInDemoMode = async () => {
+        if (demoMode) {
+            setLoading(true);
+            setTimeout(() => {
+                setLoading(false);
+            }, 1000)
+        }
+    }
 
     return (
          <div className="userdetails-container">

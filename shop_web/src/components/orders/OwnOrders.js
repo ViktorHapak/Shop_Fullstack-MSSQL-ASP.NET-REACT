@@ -5,10 +5,10 @@ import {useHttp} from "../../_client/axios";
 import Order from "./OwnOrder";
 
 function OwnOrders() {
-    const {token, loading, error, errorMessage, errorState,
-        setLoading, setError, setErrorMessage, setErrorState, setNotification} = useStateContext();
+    const {token, loading, error, errorMessage, errorState, demoMode, demoCart, demoOrder,
+        setLoading, setError, setErrorMessage, setErrorState, setNotification,setDemoOrder} = useStateContext();
     const [orders, setOrders] = useState([]);
-    const [status, setStatus] = useState("Waiting")
+    const [status, setStatus] = useState(demoMode ? "Pending" : "Waiting")
     const [edit, setEdit] = useState(null);
 
     const states = ["Pending","Waiting","Completed","Cancelled"]
@@ -21,18 +21,63 @@ function OwnOrders() {
 
 
     useEffect(() => {
-        getOrdersRequest();
+        if (demoMode) {
+            setOrders((status === "Pending" && demoCart.items.length > 0) ? [structuredClone(demoOrder)] : []);
+        } else {
+            getOrdersRequest();
+        }
     }, [status])
+
+    useEffect(() => {
+        if (demoMode) {
+            //setLoading(true);
+            loadingInDemoMode();
+            if (demoCart.items.length > 0) {
+                let _items = demoCart.items
+                    .map(_item => {
+                            return {id: _item.id, productName: _item.product, quantity: _item.quantity, totalPrice: _item.totalPrice}
+                        }
+                    );
+
+                let _order = {
+                    id: 1,
+                    customerUsername: "anonymus",
+                    status: 0,
+                    createdAt: new Date(),
+                    submittedAt: null,
+                    items: _items,
+                    totalPrice: demoCart.items.reduce((sum, item) => sum + item.totalPrice, 0)
+                }
+
+                setDemoOrder(structuredClone(_order));
+                setOrders([structuredClone(_order)]);
+
+            } else
+                setOrders([]);
+
+            //setLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
         return () => {
             setError(null);
             setLoading(false);
             setErrorMessage('');
+            setErrorState(null);
         };
-    }, [setError, setLoading, setErrorMessage]);
+    }, [setError, setLoading, setErrorMessage, setErrorState]);
 
     const setEditIndex = (index) => {setEdit(index);};
+
+    const  loadingInDemoMode = async () => {
+        if (demoMode) {
+            setLoading(true);
+            setTimeout(() => {
+                setLoading(false);
+            }, 1000)
+        }
+    }
 
     return (
          <div className={`${styles["orders-container"]}`}>

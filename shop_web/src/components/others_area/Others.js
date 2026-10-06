@@ -13,8 +13,6 @@ function Others(){
     const [countType, setCountType] = useState(0);
     const [countStock, setCountStock] = useState(0);
 
-
-
     const getIncome = useCallback(async (data) => {
         setActualDate(data?.date ?? new Date());
         setIncome(data.income ?? 0);
@@ -66,6 +64,15 @@ function Others(){
             (role === "Moderator" && authorities?.exportDatas === true)
         );
     };
+
+    useEffect(() => {
+        return () => {
+            setError(null);
+            setLoading(false);
+            setErrorMessage('');
+            setErrorState(null);
+        };
+    }, [setError, setLoading, setErrorMessage, setErrorState]);
 
     return (
         <div className={styles["main-page"]}>

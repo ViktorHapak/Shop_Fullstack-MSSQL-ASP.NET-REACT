@@ -24,7 +24,7 @@
     display: block;
     width: 90%;
     margin: auto;
-    max-height: 600px;
+    max-height: 320px;
     overflow-y: auto;
 }
 
@@ -110,5 +110,9 @@
         font-style: initial;
         font-size: 20px;
         cursor: no-drop;
+    }
+
+    .cart-container {
+        width: 90%;
     }
 }

@@ -12,8 +12,9 @@ import {useHttp} from "../_client/axios";
 function App() {
 
   const {errorState, notification, user, parameters,
-      token, role,authorities,
-      setParameters, setNotification, removeToken, setAuthorities} = useStateContext();
+      token, role, demoMode,  authorities,
+      setParameters, setNotification, removeToken, setAuthorities,
+        setProducts, setCategories, demoProducts, demoCategories} = useStateContext();
   const [searchTitle, setSearchTitle] = useState(parameters.title);
   const [serverError, setServerError] = useState(false);
 
@@ -55,6 +56,13 @@ function App() {
 
   const isActive = (path) => location.pathname === path;
 
+  useEffect(() => {
+      if (demoMode) {
+          setProducts(demoProducts);
+          setCategories(demoCategories);
+      }
+  }, [])
+
     return (
         <div className={styles["app-container"]}>
             {notification && (
@@ -74,13 +82,23 @@ function App() {
                     </div>
                 </div>
             )}
+
+            {!token && (
+                <div className={styles["demo-message-div"]}>
+                    <p>Üdvözöllek a weboldalam demo módjában! A megtekintéshez használjon anonim bejelentkezést!</p>
+                    <ul>
+                        <li>Felhasználónév: <i>anonymus</i></li>
+                        <li>Jelszó: <i>Anonim123...</i></li>
+                    </ul>
+                </div>
+            )}
+
             <nav className={styles["nav-container"]}>
                 <ul className={styles["nav-items"]}>
                     <div className={styles["left-nav"]}>
                         <li className={`${styles["nav-item"]} ${styles["brand-item"]}`}>
                             <Link className={styles["navbar-brand"]} to="/">MyShop</Link>
                         </li>
-
                         <li className={`${styles["nav-item"]} ${styles["search-item"]}`}>
                             <div className={styles["search-box"]}>
                                 <input
@@ -104,7 +122,7 @@ function App() {
                     </div>
 
                     <div className={styles["right-nav"]}>
-                        {token && role === "Visitor" &&
+                        {token && ( role === "Visitor" || role === "anonymous" ) &&
                             (
                                 <li className={`${styles["nav-item"]} ${styles["desktop-nav-item"]}`}>
                                     <Link className={styles["nav-link"]} to="/main/orders">
@@ -115,7 +133,7 @@ function App() {
                             )
                         }
 
-                        {token && role === "Visitor" &&
+                        {token && ( role === "Visitor" || role === "anonymous" ) &&
                             (
                                 <li className={`${styles["nav-item"]} ${styles["desktop-nav-item"]}`}>
                                     <Link className={styles["nav-link"]} to="/main/cart_content">
@@ -166,15 +184,18 @@ function App() {
                                     </Link>
                                 </li>
 
-                                <li>
-                                    <Link className="dropdown-item" to="/main/profile/info">
-                                        Profil
-                                    </Link>
-                                </li>
+                                {token && (
+                                    <>
+                                        <hr className={styles["dropdown-hr"]}/>
+                                        <li>
+                                            <Link className="dropdown-item" to="/main/profile/info">
+                                                Profil
+                                            </Link>
+                                        </li>
+                                    </>
+                                )}
 
-                                <hr style={{margin: '5px auto',color:"darkgray"}}/>
-
-                                {token && role === "Visitor" && (
+                                {token && ( role === "Visitor" || role === "anonymous" ) && (
                                     <li className={styles["optional-li"]}>
                                         <Link className="dropdown-item" to="/main/orders">
                                             <i className="fa fa-list" />
@@ -183,7 +204,7 @@ function App() {
                                     </li>
                                 )}
 
-                                {token && role === "Visitor" && (
+                                {token && ( role === "Visitor" || role === "anonymous" ) && (
                                     <li className={styles["optional-li"]}>
                                         <Link className="dropdown-item" to="/main/cart_content">
                                             <i className="fa fa-shopping-basket" />

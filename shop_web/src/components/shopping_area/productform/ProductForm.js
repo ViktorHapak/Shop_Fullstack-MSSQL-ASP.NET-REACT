@@ -81,8 +81,9 @@ function ProductForm(props) {
             setError(null);
             setLoading(false);
             setErrorMessage('');
+            setErrorState(null);
         };
-    }, [setError, setLoading, setErrorMessage]);
+    }, [setError, setLoading, setErrorMessage, setErrorState]);
 
     return (
         <div className={styles["productform-container"]}>

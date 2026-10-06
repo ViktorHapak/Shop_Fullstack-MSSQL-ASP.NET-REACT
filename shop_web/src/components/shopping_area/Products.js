@@ -10,10 +10,10 @@ import CleanDepartmentForm from "./CleanDepartmentForm";
 
 function Products() {
 
-    const {products, categories = [], parameters,
+    const {products, demoProducts, categories = [], parameters,
         minPrice, maxPrice, pages,
         error, errorMessage, errorState, loading,
-        token, role, authorities,
+        token, role, demoMode, authorities,
         setProducts, setParameters, setMinPrice, setMaxPrice, setCategories, setPages,
         setError, setErrorMessage, setErrorState, setLoading, setNotification} = useStateContext();
 
@@ -42,9 +42,36 @@ function Products() {
     }, [categories])
 
     useEffect(() => {
-        setMin(Number(minPrice ?? 0));
-        setMax(Number(maxPrice ?? 0));
-    }, [minPrice, maxPrice]);
+        if(parameters.min_price === null)
+            setMin(minPrice);
+    }, [minPrice]);
+
+    useEffect(() => {
+        if(parameters.max_price === null)
+            setMax(maxPrice);
+    }, [maxPrice]);
+
+    useEffect(() => {
+        if (min > max || min === undefined  || min === 0 || min === null) {
+            setParameters({...parameters, min_price: null});
+        }
+    }, [min])
+
+    useEffect(() => {
+        if (max < min || max === undefined  || max === 0 || max === null) {
+            setParameters({...parameters, max_price: null});
+        }
+    }, [max])
+
+    useEffect( () => {
+        if (min > max || min === undefined  || min < minPrice || min === null) {
+            setMin(Number(minPrice) ?? 0);
+        }
+
+        if (max < min || max === undefined  || max > maxPrice || max === null) {
+            setMax(Number(maxPrice) ?? 0);
+        }
+    }, [showPriceFilter]);
 
     useEffect(() => {
         if (!pages || pages <= 0) {
@@ -109,6 +136,7 @@ function Products() {
         setMinPrice(Number(data?.min ?? 0));
         setMaxPrice(Number(data?.max ?? 0));
 
+
         console.log(_products)
     }, []);
 
@@ -157,16 +185,121 @@ function Products() {
     } = useHttp('products/dep/all', null, 'DELETE', null, deleteDepartments);
 
     useEffect(() => {
-        sendProductsRequest();
+        if (demoMode){
+            let _products = structuredClone(demoProducts);
+
+            // 1. Search by title
+            if (parameters.title?.trim()) {
+                const title = parameters.title.trim().toLowerCase();
+
+                _products = _products.filter(product =>
+                    product.name.toLowerCase().includes(title)
+                );
+            }
+
+            // 2. Filter by category
+            if (parameters.department_name?.trim()) {
+                const departmentName =
+                    parameters.department_name.trim().toLowerCase();
+
+                const category = categories.find(category =>
+                    category.name.toLowerCase().includes(departmentName)
+                );
+
+                if (category) {
+                    _products = _products.filter(
+                        product => product.departmentId === category.id
+                    );
+                } else {
+                    _products = [];
+                }
+            }
+
+            // Count highest and lowest prices - to display auto-prices
+            if (_products.length > 0) {
+                const actualMin = Math.min(
+                    ..._products.map(product => product.price)
+                );
+
+                const actualMax = Math.max(
+                    ..._products.map(product => product.price)
+                );
+
+                setMinPrice(actualMin);
+                setMaxPrice(actualMax);
+            } else {
+                setMinPrice(0);
+                setMaxPrice(0);
+            }
+
+
+            // 3. Minimum price
+            if (
+                parameters.min_price !== null &&
+                parameters.min_price !== undefined &&
+                parameters.min_price !== ""
+            ) {
+                const minPrice = Number(parameters.min_price);
+
+                _products = _products.filter(
+                    product => product.price >= minPrice
+                );
+            }
+
+            // 4. Maximum price
+            if (
+                parameters.max_price !== null &&
+                parameters.max_price !== undefined &&
+                parameters.max_price !== ""
+            ) {
+                const maxPrice = Number(parameters.max_price);
+
+                _products = _products.filter(
+                    product => product.price <= maxPrice
+                );
+            }
+
+            /*..*/
+
+            // 5. Sorting
+            _products = orderProducts(parameters.order,_products);
+
+            // 6. Pagination
+            const page = Number(parameters.page ?? 0);
+            const size = Number(parameters.size ?? 8);
+
+            const totalItems = _products.length;
+            const totalPages = Math.ceil(totalItems / size);
+
+            const from = page * size;
+            const to = from + size;
+
+            const pageProducts = _products.slice(from, to);
+
+            setPages(totalPages);
+            setProducts(pageProducts);
+
+        } else {
+            sendProductsRequest();
+        }
+
+        if (errorState !== 500 ) {
+            setError(null);
+            setErrorMessage('');
+            setErrorState(null);
+        }
     }, [parameters]);
 
     useEffect(() => {
-        sendCategoriesRequest();
+        if (!demoMode){
+            sendCategoriesRequest();
+        }
     }, [sendCategoriesRequest]);
 
     useEffect(() => {
         setParameters(prev => ({ ...prev, department_name: null }));
-        setLoading(true);
+        if (demoMode) loadingInDemoMode();
+        else setLoading(true);
     }, []);
 
     useEffect(() => {
@@ -178,12 +311,6 @@ function Products() {
 
     useEffect(() => {
         setTimeout(() => {
-            if (errorState !== 500 ) {
-                setError(null);
-                setErrorMessage('');
-                setErrorState(null);
-            }
-
             setCleanDepartmentId(0);
         }, 5000)
     }, [error])
@@ -193,8 +320,9 @@ function Products() {
             setError(null);
             setLoading(false);
             setErrorMessage('');
+            setErrorState(null);
         };
-    }, [setError, setLoading, setErrorMessage]);
+    }, [setError, setLoading, setErrorMessage, setErrorState]);
 
     const loadDefaultProductBlob = async () => {
         const response = await fetch(productImageUrl);
@@ -247,8 +375,7 @@ function Products() {
         }
     }
 
-    /*const orderProducts = (option) => {
-        let _products = products ?? [];
+    const orderProducts = (option, _products) => {
         switch (option) {
             case "default": break;
             case "name_inc": {
@@ -270,9 +397,8 @@ function Products() {
             default: break;
         }
 
-        setOrder(order);
-        setProducts(_products);
-    };*/
+        return _products;
+    };
 
     const addProductEnabled = () => {
         return (
@@ -317,6 +443,15 @@ function Products() {
         );
     };
 
+    const  loadingInDemoMode = async () => {
+        if (demoMode) {
+            setLoading(true);
+            setTimeout(() => {
+                setLoading(false);
+            }, 1000)
+        }
+    }
+
     return (
         <div className={styles["products-container"]}>
             <div className={`${styles["navbar"]} ${styles["filter-nav"]}`}>
@@ -325,11 +460,12 @@ function Products() {
                         onMouseEnter={() => setShowCategories(true)}
                         onMouseLeave={() => setShowCategories(false)}
                     >
-                        <a className={`${styles["categories-filter"]} ${showCategories ? styles["active"] : ""}`}>
+                        <a className={`${styles["categories-filter"]} 
+                            ${(showCategories && categories.length > 0) ? styles["active"] : ""}`}>
                             <i className="fa fa-bars" />Kategóriák
                         </a>
 
-                        {errorState !== 500 && showCategories && (
+                        {errorState !== 500 && showCategories && categories.length > 0 && (
                             <div className={styles["categories-list-container"]}>
                                 {categories.map(category => (
                                         <div
@@ -367,7 +503,7 @@ function Products() {
                                     )
                                 )}
 
-                                {addDepartmentEnabled && (
+                                {addDepartmentEnabled() && (
                                     <div className={styles["category-form-container"]}>
                                         {!addDepartment ? (
                                             <button className={`${styles["category-form-open"]} btn btn-primary`}
@@ -418,7 +554,7 @@ function Products() {
                                                setParameters({
                                                    ...parameters,
                                                    page: 0,
-                                                   minPrice: min
+                                                   min_price: event.target.value
                                                });
                                            }} />
                                 </div>
@@ -430,7 +566,7 @@ function Products() {
                                                setParameters({
                                                    ...parameters,
                                                    page: 0,
-                                                   maxPrice: max,
+                                                   max_price: event.target.value
                                                });
                                            }} />
                                 </div>
@@ -438,7 +574,7 @@ function Products() {
                         )}
                     </li>
                 </ul>
-                {token && (
+                {token && addProductEnabled() && (
                     <ul className={`${styles["nav-items"]} ${styles["right"]}`}>
                         <li className={styles["nav-item"]}>
                             <button className="btn btn-success fw-bold"
@@ -463,11 +599,12 @@ function Products() {
                             <label className={`${styles["option-label"]}`} htmlFor="order-options">Rendezés:</label>
                             <select className={`${styles["order-select"]}`}
                                     value={parameters.order}
-                                    onChange={(e) =>
+                                    onChange={(event) => {
                                         setParameters(() => ({
-                                            ...({order: e.target.value})
-                                        }))
-                                    }
+                                            ...parameters,
+                                            order: event.target.value
+                                        }));
+                                    }}
                                     id="order-options"
                             >
                                 <option value="default"></option>

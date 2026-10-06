@@ -17,7 +17,7 @@ namespace Shop_server.DTO
         public DateTime Birth { get; set; }
 
         [Required(ErrorMessage = "A jelszó megadása kötelező!")]
-        [StringLength(50, MinimumLength = 5, ErrorMessage = "A jelszó 5 és 50 karakter közötti lehet!")]
+        [StringLength(50, MinimumLength = 5, ErrorMessage = "A jelszónak legalább 5 karakterből kell állnia!")]
         public String Password { get; set; }
 
     }

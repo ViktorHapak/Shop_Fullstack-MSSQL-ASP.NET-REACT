@@ -4,6 +4,7 @@ import {useHttp} from "../../_client/axios";
 import {useStateContext} from "../../_context/context_provider";
 import {useNavigate} from "react-router";
 import {set} from "react-hook-form";
+import carts from "../carts_area/Carts";
 
 
 function ProductCard(props) {
@@ -11,7 +12,8 @@ function ProductCard(props) {
     const id = props.product.id ?? null;
 
     const {notification, token, role, error, errorState, categories,
-            setNotification} = useStateContext();
+            demoMode, demoProducts, demoCart,
+            setNotification, setDemoCart} = useStateContext();
 
     const [productToEdit, setProductToEdit] = useState(props.product);
 
@@ -48,6 +50,29 @@ function ProductCard(props) {
     const {sendRequest: increaseStockRequest} = useHttp(`products/stock/${id}`, {operation: "inc", quantity: 1}, 'PUT', null, increaseStock);
     const {sendRequest: reduceStockRequest} = useHttp(`products/stock/${id}`, {operation: "red", quantity: 1}, 'PUT', null, reduceStock);
     const {sendRequest: deleteProductRequest} = useHttp(`products/${id}`, null, 'DELETE', null, deleteProduct);
+
+    const addToDemoCart = () => {
+        const _demoCart = structuredClone(demoCart);
+        let _item = _demoCart.items.find(item => item.product == props.product.name);
+
+        if (_item) {
+            _item.quantity++;
+            _item.totalPrice = _item.quantity * props.product.price;
+        } else {
+            _demoCart.items.push({id: props.product.id, product: props.product.name, quantity: 1, totalPrice: props.product.price});
+        }
+
+        //Summarizing the cart's contant summarized value
+        _demoCart.totalPrice = _demoCart.items.reduce(
+            (sum, item) => sum + item.totalPrice,
+            0
+        );
+
+        console.log(_demoCart);
+
+        setDemoCart(_demoCart);
+        setNotification(`Termék hozzáadva a bevásárlólistához: \n${props.product.name}`)
+    }
 
     useEffect(() => {
         setProductToEdit(props.product);
@@ -176,11 +201,11 @@ function ProductCard(props) {
                     </div>
                 </>
             )}
-            {!token || role === "Visitor" ? (
+            {!token || role === "Visitor" || role === "anonymous" ? (
                 <button
                     className={`${styles["product-submit"]} btn btn-success w-100 m-1`}
                     disabled={props.product.stock < 1}
-                    onClick={() => addToCartRequest()}
+                    onClick={() => demoMode ? addToDemoCart() : addToCartRequest()}
                 >
                     Kosárba tesz
                 </button>

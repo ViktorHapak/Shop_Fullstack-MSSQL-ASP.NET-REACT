@@ -25,7 +25,7 @@ function Register() {
     });
 
     const {error, errorMessage, errorState, notification, loading,
-        setError, setErrorMessage, setNotification, setLoading} = useStateContext();
+        setError, setErrorMessage, setNotification, setLoading, setErrorState} = useStateContext();
     const navigate = useNavigate();
 
     const nameRules = {
@@ -66,7 +66,7 @@ function Register() {
         required: 'Kötelező mező!',
         minLength: { value: 6, message: 'Min. 6 karakter!'},
         pattern: {
-            value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{6,}$/,
+            value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/,
             message:
                 'Legalább 1 kis- és nagybetű, 1 szám megadása kötelező!',
         },
@@ -104,8 +104,9 @@ function Register() {
             setError(null);
             setLoading(false);
             setErrorMessage('');
+            setErrorState(null);
         };
-    }, []);
+    }, [setError, setLoading, setErrorMessage, setErrorState]);
 
     return (
         <div className={styles["register-container"]}>

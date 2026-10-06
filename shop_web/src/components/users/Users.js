@@ -100,8 +100,9 @@ function Users() {
             setError(null);
             setLoading(false);
             setErrorMessage('');
+            setErrorState(null);
         };
-    }, [setError, setLoading, setErrorMessage]);
+    }, [setError, setLoading, setErrorMessage, setErrorState]);
 
     const deleteUser = async (id) => {
         try{
