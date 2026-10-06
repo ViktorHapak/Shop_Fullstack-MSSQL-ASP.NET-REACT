@@ -83,15 +83,7 @@ function App() {
                 </div>
             )}
 
-            {!token && (
-                <div className={styles["demo-message-div"]}>
-                    <p>Üdvözöllek a weboldalam demo módjában! A megtekintéshez használjon anonim bejelentkezést!</p>
-                    <ul>
-                        <li>Felhasználónév: <i>anonymus</i></li>
-                        <li>Jelszó: <i>Anonim123...</i></li>
-                    </ul>
-                </div>
-            )}
+              
 
             <nav className={styles["nav-container"]}>
                 <ul className={styles["nav-items"]}>
