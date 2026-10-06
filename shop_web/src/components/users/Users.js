@@ -250,7 +250,7 @@ function Users() {
                                 onChange={(e) => setUserParameters((prev) => ({...prev, title: e.target.value}))}
                          />
 
-                         <a className={styles["search-icon"]}><i className="fa fa-search"/></a>
+                         <button className={styles["search-icon"]}><i className="fa fa-search"/></button>
                      </div>
                  </div>
                  <div className={styles["role-container"]}>
