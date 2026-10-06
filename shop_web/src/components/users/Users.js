@@ -26,7 +26,7 @@ function Users() {
     const getUsers = useCallback(async (data) => {
         setUsers(data?.items);
         setPages(data?.totalPages);
-    })
+    }, [])
 
     const fetchOwnUser = useCallback((data) => {
         setOwnUser({
