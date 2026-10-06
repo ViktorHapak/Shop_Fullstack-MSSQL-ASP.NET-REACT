@@ -7,7 +7,7 @@ function AdminPanel() {
 
     const {error, errorState, loading, notification,
         user, parameters, token, role, authorities,
-        setError, setErrorMessage, setLoading, setAuthorities, setNotification} = useStateContext();
+        setError, setErrorMessage, setErrorState, setLoading, setAuthorities, setNotification} = useStateContext();
 
     const [touched, setTouched] = useState(false);
     const [touchedFields, setTouchedFields] = useState({});
