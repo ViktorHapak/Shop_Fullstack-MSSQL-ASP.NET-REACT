@@ -22,6 +22,7 @@ function App() {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const searchInputRef = useRef(null);
 
   const getAuthorities = useCallback(async (data) => {
         console.log("Authorities: ",data);
@@ -42,8 +43,15 @@ function App() {
           title: searchTitle,
       }), 200);
 
+
       return () => clearTimeout(timer);
   }, [searchTitle]);
+
+  useEffect(() => {
+     if (location.pathname !== '/' && location.pathname !== '/main/shopping-area'){
+         searchInputRef.current?.focus();
+     }
+  }, [location.pathname]);
 
   const displaySubMenu = () => {
     return (
@@ -53,6 +61,13 @@ function App() {
         !location.pathname.startsWith("/main/admin_panel")
     );
   };
+
+  const search = async (searchTitle) => {
+      if (location.pathname !== '/' && location.pathname !== '/main/shopping-area') {
+          navigate('/');
+      }
+      setSearchTitle(searchTitle);
+  }
 
   const isActive = (path) => location.pathname === path;
 
@@ -84,13 +99,13 @@ function App() {
             )}
 
             {!token && (
-              <div className={styles["demo-message-div"]}>
-                  <p>Üdvözöllek a weboldalam demo módjában! A megtekintéshez használjon anonim bejelentkezést!</p>
-                  <ul>
-                      <li>Felhasználónév: <i>anonymus</i></li>
-                      <li>Jelszó: <i>Anonim123...</i></li>
-                  </ul>
-              </div>
+                <div className={styles["demo-message-div"]}>
+                    <p>Üdvözöllek a weboldalam demo módjában! A megtekintéshez használjon anonim bejelentkezést!</p>
+                    <ul>
+                        <li>Felhasználónév: <i>anonymus</i></li>
+                        <li>Jelszó: <i>Anonim123...</i></li>
+                    </ul>
+                </div>
             )}
 
             <nav className={styles["nav-container"]}>
@@ -102,18 +117,12 @@ function App() {
                         <li className={`${styles["nav-item"]} ${styles["search-item"]}`}>
                             <div className={styles["search-box"]}>
                                 <input
+                                    ref={searchInputRef}
                                     className={styles["input-search"]}
                                     type="search"
                                     placeholder="Termék neve"
                                     value={searchTitle}
-                                    onChange={(event) =>
-                                        {
-                                            if (location.pathname !== '/' && location.pathname !== '/main/shopping-area') {
-                                                navigate('/');
-                                            }
-                                            setSearchTitle(event.target.value);
-                                        }
-                                    }
+                                    onChange={(event) => search(event.target.value)}
                                 />
 
                                 <a className={styles["search-icon"]}><i className="fa fa-search" /></a>
